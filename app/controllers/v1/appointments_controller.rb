@@ -17,12 +17,20 @@ class V1::AppointmentsController < ApplicationController
   def create
     begin
       @appointment = Appointment.new(appointment_params)
-
-      if @appointment.save
-        render json: {appointment: @appointment, status: "Appointment created successfully"} status: :ok
+      binding.pry
+      date = Date.parse(params[:appointment_date])
+      exist_appointment = Appointment.where("appointment_date = ?", date)
+      binding.pry
+      unless exist_appointment.present?
+        if @appointment.save
+          render json: {appointment: @appointment, status: "Appointment created successfully"}, status: :ok
+        else
+          render json: @appointment.errors, status: :unprocessable_entity
+        end
       else
-        render json: @appointment.errors, status: :unprocessable_entity
+        render json: {status: 422, error: "this day appointment already booked by someone. Please choose other day"}, status: :unprocessable_entity
       end
+      
     rescue => e 
       render json: {status: 422, error: e}, status: :unprocessable_entity
     end
@@ -31,7 +39,7 @@ class V1::AppointmentsController < ApplicationController
   # PATCH/PUT /appointments/1
   def update
     if @appointment.update(appointment_params)
-      render json: {appointment: @appointment, status: "Appointment updated successfully"} status: :ok
+      render json: {appointment: @appointment, status: "Appointment updated successfully"}, status: :ok
     else
       render json: @appointment.errors, status: :unprocessable_entity
     end
@@ -40,7 +48,7 @@ class V1::AppointmentsController < ApplicationController
   # DELETE /appointments/1
   def destroy
     @appointment.destroy
-    render json: {status: "Appointment deleted successfully"} status: :ok
+    render json: {status: "Appointment deleted successfully"}, status: :ok
   end
 
   private
@@ -56,6 +64,6 @@ class V1::AppointmentsController < ApplicationController
 
     # Only allow a trusted parameter "white list" through.
     def appointment_params
-      params.fetch(:appointment, {})
+      params.permit(:doctor_id, :patient_id, :appointment_date)
     end
 end
