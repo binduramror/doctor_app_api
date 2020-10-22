@@ -19,7 +19,8 @@ class V1::AppointmentsController < ApplicationController
       @appointment = Appointment.new(appointment_params)
       binding.pry
       date = Date.parse(params[:appointment_date])
-      exist_appointment = Appointment.where("appointment_date = ?", date)
+      slot = Time.parse(params[:slot]).strftime("%I:%M%p")
+      exist_appointment = Appointment.where("appointment_date = ? AND slot = ?", date, slot)
       binding.pry
       unless exist_appointment.present?
         if @appointment.save
@@ -64,6 +65,6 @@ class V1::AppointmentsController < ApplicationController
 
     # Only allow a trusted parameter "white list" through.
     def appointment_params
-      params.permit(:doctor_id, :patient_id, :appointment_date)
+      params.permit(:doctor_id, :patient_id, :appointment_date, :slot)
     end
 end
